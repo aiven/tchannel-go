@@ -104,6 +104,8 @@ func TestUnexpectedInitReq(t *testing.T) {
 
 		conn, err := net.Dial("tcp", hostPort)
 		require.NoError(t, err)
+		conn = NewLZ4Conn(conn)
+		defer conn.Close()
 		conn.SetReadDeadline(time.Now().Add(time.Second))
 
 		if !assert.NoError(t, writeMessage(conn, tt.initMsg), "write to conn failed") {
@@ -193,6 +195,8 @@ func TestUnexpectedInitRes(t *testing.T) {
 		}()
 
 		conn, err := ln.Accept()
+		conn = NewLZ4Conn(conn)
+		defer conn.Close()
 		require.NoError(t, err, "Failed to accept connection")
 
 		// Read the frame and verify that it's an initReq.
@@ -217,6 +221,7 @@ func TestHandleInitReqNewVersion(t *testing.T) {
 
 	conn, err := net.Dial("tcp", hostPort)
 	require.NoError(t, err)
+	conn = NewLZ4Conn(conn)
 	defer conn.Close()
 	conn.SetReadDeadline(time.Now().Add(time.Second))
 
@@ -259,6 +264,7 @@ func TestHandleInitRes(t *testing.T) {
 		require.NoError(t, err, "l.Accept failed")
 
 		// The connection should be kept open until the test has completed running.
+		conn = NewLZ4Conn(conn)
 		defer conn.Close()
 		defer func() { listenerComplete <- struct{}{} }()
 
@@ -299,6 +305,7 @@ func TestInitReqGetsError(t *testing.T) {
 		defer func() { listenerComplete <- struct{}{} }()
 		conn, err := l.Accept()
 		require.NoError(t, err, "l.Accept failed")
+		conn = NewLZ4Conn(conn)
 		defer conn.Close()
 
 		f, err := readFrame(conn)

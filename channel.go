@@ -484,7 +484,7 @@ func (ch *Channel) serve() {
 				return
 			}
 		}
-
+		netConn = NewLZ4Conn(netConn)
 		acceptBackoff = 0
 
 		// Perform the connection handshake in a background goroutine.
@@ -588,7 +588,7 @@ func (ch *Channel) Connect(ctx context.Context, hostPort string) (*Connection, e
 		}
 		return nil, err
 	}
-
+	tcpConn = NewLZ4Conn(tcpConn)
 	conn, err := ch.outboundHandshake(ctx, tcpConn, hostPort, events)
 	if conn != nil {
 		// It's possible that the connection we just created responds with a host:port

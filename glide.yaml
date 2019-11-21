@@ -33,6 +33,10 @@ import:
   version: ^2.7
 - package: github.com/uber-go/tally
   version: ^3
+- package: github.com/pierrec/lz4
+  version: 377214e3044ff9f12d996f3037fb8c3e3ad16b49
+  subpackages:
+    - internal
 testImport:
 - package: github.com/jessevdk/go-flags
   version: ^1

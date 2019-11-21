@@ -51,6 +51,7 @@ func (r *frameRelay) listen() (listenHostPort string, cancel func()) {
 	go func() {
 		for {
 			c, err := conn.Accept()
+			c = tchannel.NewLZ4Conn(c)
 			if err != nil {
 				if r.closed.Load() == 0 {
 					r.t.Errorf("Accept failed: %v", err)
@@ -81,6 +82,7 @@ func (r *frameRelay) listen() (listenHostPort string, cancel func()) {
 
 func (r *frameRelay) relayConn(c net.Conn) {
 	outC, err := net.Dial("tcp", r.destination)
+	outC = tchannel.NewLZ4Conn(outC)
 	if !assert.NoError(r.t, err, "relay connection failed") {
 		return
 	}
