@@ -52,6 +52,32 @@ const (
 	DefaultConnectionBufferSize = 512
 )
 
+// CompressionMethod used in connection
+type CompressionMethod string
+
+const (
+	// NoCompression means that no compression is used
+	NoCompression CompressionMethod = ""
+	// SnappyCompression enables the snappy compression
+	SnappyCompression CompressionMethod = "snappy"
+)
+
+func (cm CompressionMethod) String() string {
+	return string(cm)
+}
+
+// NewCompressionMethod returns CompressionMethod from string
+func NewCompressionMethod(s string) (CompressionMethod, error) {
+	switch s {
+	case "none", "":
+		return NoCompression, nil
+	case "snappy":
+		return SnappyCompression, nil
+	default:
+		return "", fmt.Errorf("invalid compression method '%s'", s)
+	}
+}
+
 // PeerVersion contains version related information for a specific peer.
 // These values are extracted from the init headers.
 type PeerVersion struct {
@@ -73,6 +99,9 @@ type PeerInfo struct {
 
 	// Version returns the version information for the remote peer.
 	Version PeerVersion `json:"version"`
+
+	// CompressionMethod returns the compression method used by the peer.
+	CompressionMethod CompressionMethod `json:"compressionMethod"`
 }
 
 func (p PeerInfo) String() string {
@@ -163,6 +192,9 @@ type ConnectionOptions struct {
 	// the per-connection base context. This context is used as the parent context
 	// for incoming calls.
 	ConnContext func(ctx context.Context, conn net.Conn) context.Context
+
+	// CompressionMethod specifies the compression used
+	CompressionMethod CompressionMethod
 }
 
 // connectionEvents are the events that can be triggered by a connection.
@@ -324,6 +356,7 @@ func (ch *Channel) newConnection(baseCtx context.Context, conn net.Conn, initial
 		{"remoteHostPort", remotePeer.HostPort},
 		{"remoteIsEphemeral", remotePeer.IsEphemeral},
 		{"remoteProcess", remotePeer.ProcessName},
+		{"compression", remotePeer.CompressionMethod},
 	}...)
 	if outboundHP != "" {
 		connDirection = outbound
@@ -333,6 +366,11 @@ func (ch *Channel) newConnection(baseCtx context.Context, conn net.Conn, initial
 	log = log.WithFields(LogField{"connectionDirection", connDirection})
 	peerInfo := ch.PeerInfo()
 	timeNow := ch.timeNow().UnixNano()
+
+	// Enable compression if both peers have it enabled
+	if peerInfo.CompressionMethod == SnappyCompression && peerInfo.CompressionMethod == remotePeer.CompressionMethod {
+		conn = NewSnappyConnection(conn)
+	}
 
 	c := &Connection{
 		channelConnectionCommon: ch.channelConnectionCommon,
