@@ -264,6 +264,18 @@ func (o *ChannelOpts) SetDialer(f func(context.Context, string, string) (net.Con
 	return o
 }
 
+// SetCompressionMethod sets the compression method used for outbound connections
+func (o *ChannelOpts) SetCompressionMethod(cm tchannel.CompressionMethod) *ChannelOpts {
+	o.ChannelOptions.DefaultConnectionOptions.CompressionMethod = cm
+	return o
+}
+
+// SetConnContext sets the connection's ConnContext function
+func (o *ChannelOpts) SetConnContext(f func(context.Context, net.Conn) context.Context) *ChannelOpts {
+	o.DefaultConnectionOptions.ConnContext = f
+	return o
+}
+
 func defaultString(v string, defaultValue string) string {
 	if v == "" {
 		return defaultValue

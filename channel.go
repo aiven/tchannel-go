@@ -168,6 +168,7 @@ type Channel struct {
 	handler             Handler
 	onPeerStatusChanged func(*Peer)
 	dialer              func(ctx context.Context, hostPort string) (net.Conn, error)
+	compressionMethod   string
 	closed              chan struct{}
 
 	// mutable contains all the members of Channel which are mutable.
@@ -299,6 +300,7 @@ func NewChannel(serviceName string, opts *ChannelOptions) (*Channel, error) {
 				LanguageVersion: strings.TrimPrefix(runtime.Version(), "go"),
 				TChannelVersion: VersionInfo,
 			},
+			CompressionMethod: ch.ConnectionOptions().CompressionMethod,
 		},
 		ServiceName: serviceName,
 	}
